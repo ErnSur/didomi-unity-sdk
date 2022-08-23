@@ -198,42 +198,53 @@ public static class PostProcessor
     /// <summary>
     /// Method called when Unity generates native projects.
     /// </summary>
-    /// <param name="buildTarget">Platform (Android, iOS)</param>
+    /// <param name="buildTarget">Platform (Android, iOS, tvOS)</param>
     /// <param name="buildPath">Generated project path</param>
     [PostProcessBuild]
     public static void OnPostProcessBuild(BuildTarget buildTarget, string buildPath)
     {
         Debug.Log("Didomi OnPostProcessBuild invoked" + buildPath);
-        
-        if (buildTarget == BuildTarget.iOS)
+        if (buildTarget == BuildTarget.tvOS)
         {
-            PostProcessorSettings.InitSettings();
-            
-            // PBXProject.GetPBXProjectPath returns the wrong path, we need to construct path by ourselves instead
-            // var projPath = PBXProject.GetPBXProjectPath(buildPath);
-            var projPath = buildPath + $"{PostProcessorSettings.FilePathSeperator}Unity-iPhone.xcodeproj{PostProcessorSettings.FilePathSeperator}project.pbxproj";
-            var proj = new PBXProject();
-            proj.ReadFromFile(projPath);
-
-            var targetGuid = proj.GetUnityMainTargetGuid();
-
-            //// Configure build settings
-            proj.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
-
-            proj.AddBuildProperty(targetGuid, "DEFINES_MODULE", "YES");
-            proj.AddBuildProperty(targetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
-
-            proj.AddBuildProperty(targetGuid, "LD_RUNPATH_SEARCH_PATHS", "@executable_path/Frameworks");
-            proj.AddBuildProperty(targetGuid, "FRAMEWORK_SEARCH_PATHS", "$(inherited) $(PROJECT_DIR) $(PROJECT_DIR)/Frameworks");
-            proj.AddBuildProperty(targetGuid, "DYLIB_INSTALL_NAME_BASE", "@rpath");
-            proj.AddBuildProperty(targetGuid, "LD_DYLIB_INSTALL_NAME", "@executable_path/../Frameworks/$(EXECUTABLE_PATH)");
-
-            SetupDidomiFrameworkForTargetSDK(proj, targetGuid, buildPath);
-            CopyDidomiConfigFileToIOSFolder(proj, targetGuid, buildPath);
-            CopyPackageJsonToIOSFolder(proj, targetGuid, buildPath);
-
-            proj.WriteToFile(projPath);
+            Debug.Log("Post-process -- tvOS");
+            SetupDidomiFramework(buildPath, forTvOS: true);
         }
+        else if (buildTarget == BuildTarget.iOS)
+        {
+            Debug.Log("Post-process -- iOS");
+            SetupDidomiFramework(buildPath, forTvOS: false);
+        }
+    }
+
+    private static void SetupDidomiFramework(string buildPath, bool forTvOS)
+    {
+        PostProcessorSettings.InitSettings();
+
+        // PBXProject.GetPBXProjectPath returns the wrong path, we need to construct path by ourselves instead
+        // var projPath = PBXProject.GetPBXProjectPath(buildPath);
+        string projectSuffix = /*forTvOS ? "appleTV" : */"iPhone";
+        var projPath = buildPath + $"{PostProcessorSettings.FilePathSeperator}Unity-{projectSuffix}.xcodeproj{PostProcessorSettings.FilePathSeperator}project.pbxproj";
+        var proj = new PBXProject();
+        proj.ReadFromFile(projPath);
+
+        var targetGuid = proj.GetUnityMainTargetGuid();
+
+        //// Configure build settings
+        proj.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
+
+        proj.AddBuildProperty(targetGuid, "DEFINES_MODULE", "YES");
+        proj.AddBuildProperty(targetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+
+        proj.AddBuildProperty(targetGuid, "LD_RUNPATH_SEARCH_PATHS", "@executable_path/Frameworks");
+        proj.AddBuildProperty(targetGuid, "FRAMEWORK_SEARCH_PATHS", "$(inherited) $(PROJECT_DIR) $(PROJECT_DIR)/Frameworks");
+        proj.AddBuildProperty(targetGuid, "DYLIB_INSTALL_NAME_BASE", "@rpath");
+        proj.AddBuildProperty(targetGuid, "LD_DYLIB_INSTALL_NAME", "@executable_path/../Frameworks/$(EXECUTABLE_PATH)");
+
+        SetupDidomiFrameworkForTargetSDK(proj, targetGuid, buildPath, forTvOS);
+        CopyDidomiConfigFileToIOSFolder(proj, targetGuid, buildPath);
+        CopyPackageJsonToIOSFolder(proj, targetGuid, buildPath);
+
+        proj.WriteToFile(projPath);
     }
 
     /// <summary>
@@ -242,14 +253,29 @@ public static class PostProcessor
     /// <param name="project"></param>
     /// <param name="targetGuid"></param>
     /// <param name="path"></param>
-    private static void SetupDidomiFrameworkForTargetSDK(PBXProject project, string targetGuid, string path)
+    private static void SetupDidomiFrameworkForTargetSDK(PBXProject project, string targetGuid, string path, bool forTvOS)
     {
         var xcframeworkPath = $"Frameworks{PostProcessorSettings.FilePathSeperator}Plugins{PostProcessorSettings.FilePathSeperator}Didomi{PostProcessorSettings.FilePathSeperator}IOS{PostProcessorSettings.FilePathSeperator}Didomi.xcframework";
         var unusedSDKPath = string.Empty;
-        var simulatorPath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}ios-arm64_i386_x86_64-simulator";
-        var devicePath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}ios-arm64_armv7";
+        string simulatorFramework;
+        string deviceFramework;
+        string simulatorPath;
+        string devicePath;
 
-        if (PlayerSettings.iOS.sdkVersion == iOSSdkVersion.DeviceSDK)
+        if (forTvOS)
+        {
+            simulatorFramework = "tvos-arm64_x86_64-simulator";
+            deviceFramework = "tvos-arm64";
+        } else
+        {
+            simulatorFramework = "ios-arm64_i386_x86_64-simulator";
+            deviceFramework = "ios-arm64_armv7";
+        }
+
+        simulatorPath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}{simulatorFramework}";
+        devicePath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}{deviceFramework}";
+
+        if ((forTvOS && PlayerSettings.tvOS.sdkVersion == tvOSSdkVersion.Device) || (!forTvOS && PlayerSettings.iOS.sdkVersion == iOSSdkVersion.DeviceSDK))
         {
             unusedSDKPath = simulatorPath;
         }
@@ -257,8 +283,8 @@ public static class PostProcessor
         {
             unusedSDKPath = devicePath;
             var mmFile = $"{path}{PostProcessorSettings.FilePathSeperator}Libraries{PostProcessorSettings.FilePathSeperator}Plugins{PostProcessorSettings.FilePathSeperator}Didomi{PostProcessorSettings.FilePathSeperator}IOS{PostProcessorSettings.FilePathSeperator}Didomi.mm";
-            var headerFileImportLineDevice = @"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/ios-arm64_armv7/Didomi.framework/Headers/Didomi-Swift.h""";
-            var headerFileImportLineSimulator = @"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/ios-arm64_i386_x86_64-simulator/Didomi.framework/Headers/Didomi-Swift.h""";
+            var headerFileImportLineDevice = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/{deviceFramework}/Didomi.framework/Headers/Didomi-Swift.h""";
+            var headerFileImportLineSimulator = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/{simulatorFramework}/Didomi.framework/Headers/Didomi-Swift.h""";
             ReplaceLineInFile(mmFile, headerFileImportLineDevice, headerFileImportLineSimulator);
         }
 
