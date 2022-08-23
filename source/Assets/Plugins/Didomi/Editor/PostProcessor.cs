@@ -206,23 +206,28 @@ public static class PostProcessor
         Debug.Log("Didomi OnPostProcessBuild invoked" + buildPath);
         if (buildTarget == BuildTarget.tvOS)
         {
-            Debug.Log("Post-process -- tvOS");
+            Debug.Log("Didomi Post-process for tvOS");
             SetupDidomiFramework(buildPath, forTvOS: true);
         }
         else if (buildTarget == BuildTarget.iOS)
         {
-            Debug.Log("Post-process -- iOS");
+            Debug.Log("Didomi Post-process for iOS");
             SetupDidomiFramework(buildPath, forTvOS: false);
         }
     }
 
+    /// <summary>
+    /// Setups and configures project to support Didomi on iOS/tvOS platform.
+    /// </summary>
+    /// <param name="buildPath"></param>
+    /// <param name="forTvOS"></param>
     private static void SetupDidomiFramework(string buildPath, bool forTvOS)
     {
         PostProcessorSettings.InitSettings();
 
         // PBXProject.GetPBXProjectPath returns the wrong path, we need to construct path by ourselves instead
         // var projPath = PBXProject.GetPBXProjectPath(buildPath);
-        string projectSuffix = /*forTvOS ? "appleTV" : */"iPhone";
+        string projectSuffix = "iPhone";
         var projPath = buildPath + $"{PostProcessorSettings.FilePathSeperator}Unity-{projectSuffix}.xcodeproj{PostProcessorSettings.FilePathSeperator}project.pbxproj";
         var proj = new PBXProject();
         proj.ReadFromFile(projPath);
@@ -248,11 +253,12 @@ public static class PostProcessor
     }
 
     /// <summary>
-    /// For iOS platform, setups and configures didomi native libs for target SDK Device or Simulator.
+    /// For iOS/tvOS platform, setups and configures didomi native libs for target SDK Device or Simulator.
     /// </summary>
     /// <param name="project"></param>
     /// <param name="targetGuid"></param>
     /// <param name="path"></param>
+    /// <param name="forTvOS"></param>
     private static void SetupDidomiFrameworkForTargetSDK(PBXProject project, string targetGuid, string path, bool forTvOS)
     {
         var xcframeworkPath = $"Frameworks{PostProcessorSettings.FilePathSeperator}Plugins{PostProcessorSettings.FilePathSeperator}Didomi{PostProcessorSettings.FilePathSeperator}IOS{PostProcessorSettings.FilePathSeperator}Didomi.xcframework";
