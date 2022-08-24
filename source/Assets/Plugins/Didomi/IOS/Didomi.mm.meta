@@ -28,6 +28,12 @@ PluginImporter:
       enabled: 1
       settings:
         AddToEmbeddedBinaries: false
+  - first:
+      tvOS: tvOS
+    second:
+      enabled: 1
+      settings:
+        AddToEmbeddedBinaries: false
   userData: 
   assetBundleName: 
   assetBundleVariant: 

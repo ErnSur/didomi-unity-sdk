@@ -281,22 +281,32 @@ public static class PostProcessor
         simulatorPath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}{simulatorFramework}";
         devicePath = $"{xcframeworkPath}{PostProcessorSettings.FilePathSeperator}{deviceFramework}";
 
-        if ((forTvOS && PlayerSettings.tvOS.sdkVersion == tvOSSdkVersion.Device) || (!forTvOS && PlayerSettings.iOS.sdkVersion == iOSSdkVersion.DeviceSDK))
+        if (forTvOS)
+        {
+            if (PlayerSettings.tvOS.sdkVersion == tvOSSdkVersion.Device)
+            {
+                unusedSDKPath = simulatorPath;
+                ReplaceFrameworkImport(path, deviceFramework);
+            }
+            else
+            {
+                unusedSDKPath = devicePath;
+                ReplaceFrameworkImport(path, simulatorFramework);
+            }
+        }
+        else if (PlayerSettings.iOS.sdkVersion == iOSSdkVersion.DeviceSDK)
         {
             unusedSDKPath = simulatorPath;
         }
         else
         {
             unusedSDKPath = devicePath;
-            var mmFile = $"{path}{PostProcessorSettings.FilePathSeperator}Libraries{PostProcessorSettings.FilePathSeperator}Plugins{PostProcessorSettings.FilePathSeperator}Didomi{PostProcessorSettings.FilePathSeperator}IOS{PostProcessorSettings.FilePathSeperator}Didomi.mm";
-            var headerFileImportLineDevice = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/{deviceFramework}/Didomi.framework/Headers/Didomi-Swift.h""";
-            var headerFileImportLineSimulator = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/{simulatorFramework}/Didomi.framework/Headers/Didomi-Swift.h""";
-            ReplaceLineInFile(mmFile, headerFileImportLineDevice, headerFileImportLineSimulator);
+            ReplaceFrameworkImport(path, simulatorFramework);
         }
 
-		if(Directory.Exists($"{path}{PostProcessorSettings.FilePathSeperator}{unusedSDKPath}"))
+        if (Directory.Exists($"{path}{PostProcessorSettings.FilePathSeperator}{unusedSDKPath}"))
 		{
-			Directory.Delete($"{path}{PostProcessorSettings.FilePathSeperator}{unusedSDKPath}", true);
+            Directory.Delete($"{path}{PostProcessorSettings.FilePathSeperator}{unusedSDKPath}", true);
 			var frameworkPath = $@"{unusedSDKPath}{PostProcessorSettings.FilePathSeperator}Didomi.framework";
 			var guid = project.FindFileGuidByProjectPath(frameworkPath);
 			var unityFrameworkGuid = project.GetUnityFrameworkTargetGuid();
@@ -306,6 +316,14 @@ public static class PostProcessor
 			project.RemoveFrameworkFromProject(targetGuid, frameworkPath);
 			project.RemoveFrameworkFromProject(unityFrameworkGuid, frameworkPath);
 		}
+    }
+
+    private static void ReplaceFrameworkImport(string path, string replacementFramework)
+    {
+        var mmFile = $"{path}{PostProcessorSettings.FilePathSeperator}Libraries{PostProcessorSettings.FilePathSeperator}Plugins{PostProcessorSettings.FilePathSeperator}Didomi{PostProcessorSettings.FilePathSeperator}IOS{PostProcessorSettings.FilePathSeperator}Didomi.mm";
+        var oldHeaderFileImportLine = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/ios-arm64_armv7/Didomi.framework/Headers/Didomi-Swift.h""";
+        var newHeaderFileImportLine = $@"#import ""Frameworks/Plugins/Didomi/IOS/Didomi.xcframework/{replacementFramework}/Didomi.framework/Headers/Didomi-Swift.h""";
+        ReplaceLineInFile(mmFile, oldHeaderFileImportLine, newHeaderFileImportLine);
     }
 
     /// <summary>
