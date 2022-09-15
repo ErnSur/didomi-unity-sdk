@@ -207,31 +207,12 @@ namespace IO.Didomi.SDK.Android
             string remoteConfigurationURL,
             string providerId,
             bool disableDidomiRemoteConfig,
-            string languageCode)
-        {
-            object[] args = new object[6];
-            args[0] = apiKey;
-            args[1] = localConfigurationPath;
-            args[2] = remoteConfigurationURL;
-            args[3] = providerId;
-            args[4] = disableDidomiRemoteConfig;
-            args[5] = languageCode;
-
-            CallVoidMethodForInitialize(
-                "initialize",
-                args);
-        }
-
-        public void Initialize(
-            string apiKey,
-            string localConfigurationPath,
-            string remoteConfigurationURL,
-            string providerId,
-            bool disableDidomiRemoteConfig,
             string languageCode,
-            string noticeId)
+            string noticeId,
+            string androidTvNoticeId,
+            bool androidTvEnabled)
         {
-            object[] args = new object[7];
+            object[] args = new object[9];
             args[0] = apiKey;
             args[1] = localConfigurationPath;
             args[2] = remoteConfigurationURL;
@@ -239,6 +220,8 @@ namespace IO.Didomi.SDK.Android
             args[4] = disableDidomiRemoteConfig;
             args[5] = languageCode;
             args[6] = noticeId;
+            args[7] = androidTvNoticeId;
+            args[8] = androidTvEnabled;
 
             CallVoidMethodForInitialize(
                 "initialize",

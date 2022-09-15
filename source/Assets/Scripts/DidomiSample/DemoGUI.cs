@@ -694,9 +694,9 @@ public class DemoGUI : MonoBehaviour
             InitializeDidomi();
         }
 
-        if (GUI.Button(GetFuncRect2(), "Initialize1"))
+        if (GUI.Button(GetFuncRect2(), "InitializeAndroidTV"))
         {
-            Initialize1Didomi();
+            InitializeDidomiAndroidTV();
         }
 
         if (GUI.Button(GetFuncRect3(), "IsReady"))
@@ -727,11 +727,28 @@ public class DemoGUI : MonoBehaviour
             localConfigurationPath: null,
             remoteConfigurationURL: null,
             providerId: null,
-            disableDidomiRemoteConfig: true,
-            languageCode: null);
+            disableDidomiRemoteConfig: true);
     }
 
     private void Initialize1Didomi()
+    {
+        message = string.Empty;
+
+        Didomi.GetInstance().OnReady(
+              () => { message = "Ready"; }
+              );
+
+        InitializeDidomiAndroidTV();
+        //Didomi.GetInstance().Initialize(
+        //    apiKey: "9bf8a7e4-db9a-4ff2-a45c-ab7d2b6eadba",
+        //    localConfigurationPath: null,
+        //    remoteConfigurationURL: null,
+        //    providerId: null,
+        //    disableDidomiRemoteConfig: false,
+        //    noticeId: "Ar7NPQ72");
+    }
+
+    private void InitializeDidomiAndroidTV()
     {
         message = string.Empty;
 
@@ -745,8 +762,8 @@ public class DemoGUI : MonoBehaviour
             remoteConfigurationURL: null,
             providerId: null,
             disableDidomiRemoteConfig: false,
-            languageCode: null,
-            noticeId: "Ar7NPQ72");
+            androidTvNoticeId: "DirGCFKy",
+            androidTvEnabled: true);
     }
 
     void Events()

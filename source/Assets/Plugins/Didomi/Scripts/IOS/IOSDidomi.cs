@@ -180,21 +180,10 @@ namespace IO.Didomi.SDK.IOS
           string remoteConfigurationPath,
           string providerId,
           bool disableDidomiRemoteConfig,
-          string languageCode
-          )
-        {
-            DidomiFramework.Initialize(apiKey, localConfigurationPath, remoteConfigurationPath, providerId, disableDidomiRemoteConfig, languageCode);
-        }
-
-        public void Initialize(
-          string apiKey,
-          string localConfigurationPath,
-          string remoteConfigurationPath,
-          string providerId,
-          bool disableDidomiRemoteConfig,
           string languageCode,
-          string noticeId
-          )
+          string noticeId,
+          string androidTvNoticeId,
+          bool androidTvEnabled)
         {
             DidomiFramework.Initialize(apiKey, localConfigurationPath, remoteConfigurationPath, providerId, disableDidomiRemoteConfig, languageCode, noticeId);
         }

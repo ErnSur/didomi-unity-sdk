@@ -164,28 +164,10 @@ namespace IO.Didomi.SDK.UnityEditor
           string remoteConfigurationPath,
           string providerId,
           bool disableDidomiRemoteConfig,
-          string languageCode
-          )
-        {
-            if (_isInitialized)
-            {
-                return;
-            }
-
-            _isInitialized = true;
-
-            _onReadyAction?.Invoke();
-        }
-
-        public void Initialize(
-          string apiKey,
-          string localConfigurationPath,
-          string remoteConfigurationPath,
-          string providerId,
-          bool disableDidomiRemoteConfig,
           string languageCode,
-          string noticeId
-          )
+          string noticeId,
+          string androidTvNoticeId,
+          bool androidTvEnabled)
         {
             if (_isInitialized)
             {

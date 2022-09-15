@@ -42,17 +42,10 @@ namespace IO.Didomi.SDK.Interfaces
           string remoteConfigurationURL,
           string providerId,
           bool disableDidomiRemoteConfig,
-          string languageCode
-          );
-        void Initialize(
-          string apiKey,
-          string localConfigurationPath,
-          string remoteConfigurationURL,
-          string providerId,
-          bool disableDidomiRemoteConfig,
           string languageCode,
-          string noticeId
-          );
+          string noticeId,
+          string androidTvNoticeId,
+          bool androidTvEnabled);
         bool IsConsentRequired();
         bool IsUserConsentStatusPartial();
         bool IsNoticeVisible();
